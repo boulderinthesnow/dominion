@@ -571,7 +571,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 			}
 			//console.log((this.cashInPlay >= 5), (board.province <= 7), (board.dutchy > 0), (this.buys > 0));
 
-			if ((this.cashInPlay >= 5) && (board.province <= 3) && (board.dutchy > 0) &&
+			if ((this.cashInPlay >= 5) && (board.province <= 7) && (board.dutchy > 0) &&
 			(this.buys > 0)){ // buy province
 				dutchy.buy(this);
 			
