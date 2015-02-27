@@ -58,7 +58,7 @@ Card.prototype.buy = function(player) {
 	player.cashInPlay -= this.cost;
 	player.discard.push(this);   // add to deck
 	board[this.card] -= 1			  // subtract 1 from supply
-	console.log (board[this.card], this.card, "board[this.card]")
+//	console.log (board[this.card], this.card, "board[this.card]")
 	player.buys -= 1		  // spend 1 buy
 	player.stats.buy += 1   // add buy to stats
 	player.stats[this.card] += 1  // add gold to stats
@@ -291,7 +291,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		
 		
 		while ((this.hand.length < 5) && (this.deck.length > 0)){
-		 console.log ("drawing 5 process started...")
+//		 console.log ("drawing 5 process started...")
 			this.hand.push(this.deck[0]);
 			//				// console.log(playerOneHand, "playerOneHand");
 			//				// console.log(playerOneHand.length, "playerOneHand.length")
@@ -353,8 +353,8 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 			//console.log(this.cashInPlay.reduce(function(a,b){return a + b},0));
 			
 			this.cashInPlay = (this.inPlay.map(function(x){return x.cash})).reduce(function(a,b){return a + b},0);
-			console.log(this.cashInPlay, "cashInPlay", this.name)
-			console.log(this.inPlay.map(function(x){return x.cash}))
+//			console.log(this.cashInPlay, "cashInPlay", this.name)
+//			console.log(this.inPlay.map(function(x){return x.cash}))
 			
 			this.doSpecial();
 			
@@ -403,7 +403,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 			// console.log(this.inPlay.length, "Cards in play");
 			// console.log(this.discard.length, "Cards in discard");
 			if ((this.hand.length < 5 ) && (this.deck.length >= 5 )){
-				console.log ("foo");
+	//			console.log ("foo");
 				while (this.hand.length < 5){
 					this.hand.push(this.deck[0]);
 					this.deck.shift();
@@ -514,12 +514,66 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 
 		var playerOne = new Player("playerOne");
 		var playerTwo = new Player("playerTwo");
+		
+		playerOne.doSpecial = function() {
+			if (this.cashInPlay < 3){
+				this.stats.notEnoughCash += 1
+				this.totals.notEnoughCash += 1
+				
+			};
+			// tell me how much $ is in play (combined)
+			//this.cashInPlay = this.cashInPlay.reduce(function(a,b){return a + b},0);
+			// console.log (this.cashInPlay, this.name, ": cash in play")
+			// console.log (this.buys, this.name,": buys")
+			// if enough $ for gold, buy gold, put in deck, remove 1 from supply
+
+				
+			if ((this.cashInPlay >= 8) && (board.province > 0) &&
+			(this.buys > 0)){ // buy province
+				province.buy(this);
+			
+				// console.log (this.cashInPlay, this.name, "CashInPlay");
+				// console.log (board.province, ": Provinces remaining" );
+			}
+			//console.log((this.cashInPlay >= 5), (board.province <= 7), (board.dutchy > 0), (this.buys > 0));
+
+			if ((this.cashInPlay >= 5) && (board.province <= 5) && (board.dutchy > 0) &&
+			(this.buys > 0)){ // buy dutchy
+				dutchy.buy(this);
+			}
+			
+			
+			if ((this.cashInPlay >= 6) && (this.cashInPlay < 8) && 
+			(this.buys > 0)){ // buy gold
+				gold.buy(this);
+				//				// console.log (this.Discard, "this.Discard");
+				// console.log (this.cashInPlay, this.name,"CashInPlay remaining");
+				// console.log (board.gold, "board.gold", "have purchased ", 30 - board.gold, " golds" );
+			
+			} else if ((this.cashInPlay >= 3) && (this.cashInPlay < 6) && 
+			(this.buys > 0)){ // buy silver
+				silver.buy(this);
+				//				// console.log (this.Discard, "this.Discard");
+				// console.log (this.cashInPlay, this.name,"CashInPlay remaining");
+				// console.log (board.silver, "board.silver", "have purchased ", 40 - board.silver, " silvers" );
+
+			};
+				//}
+			
+			
+		}
+		
 		playerTwo.doSpecial = function() {
 			if (this.cashInPlay < 3){
 				this.stats.notEnoughCash += 1
 				this.totals.notEnoughCash += 1
 				
 			};
+			
+			if ((this.cashInPlay >= 5) && (this.cashInPlay < 8) && (board.province <= 5) && (board.dutchy > 0) &&
+			(this.buys > 0)){ // buy dutchy
+				dutchy.buy(this);
+			}
 			// tell me how much $ is in play (combined)
 			//this.cashInPlay = this.cashInPlay.reduce(function(a,b){return a + b},0);
 			// console.log (this.cashInPlay, this.name, ": cash in play")
@@ -549,56 +603,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 				// console.log (board.province, ": Provinces remaining" );
 			};
 		}
-		playerOne.doSpecial = function() {
-			if (this.cashInPlay < 3){
-				this.stats.notEnoughCash += 1
-				this.totals.notEnoughCash += 1
-				
-			};
-			// tell me how much $ is in play (combined)
-			//this.cashInPlay = this.cashInPlay.reduce(function(a,b){return a + b},0);
-			// console.log (this.cashInPlay, this.name, ": cash in play")
-			// console.log (this.buys, this.name,": buys")
-			// if enough $ for gold, buy gold, put in deck, remove 1 from supply
 
-				
-			if ((this.cashInPlay >= 8) && (board.province > 0) &&
-			(this.buys > 0)){ // buy province
-				province.buy(this);
-			
-				// console.log (this.cashInPlay, this.name, "CashInPlay");
-				// console.log (board.province, ": Provinces remaining" );
-			}
-			//console.log((this.cashInPlay >= 5), (board.province <= 7), (board.dutchy > 0), (this.buys > 0));
-
-			if ((this.cashInPlay >= 5) && (board.province <= 7) && (board.dutchy > 0) &&
-			(this.buys > 0)){ // buy province
-				dutchy.buy(this);
-			
-				// console.log (this.cashInPlay, this.name, "CashInPlay");
-				// console.log (board.province, ": Provinces remaining" );
-			}
-			
-			
-			if ((this.cashInPlay >= 6) && (this.cashInPlay < 8) && 
-			(this.buys > 0)){ // buy gold
-				gold.buy(this);
-				//				// console.log (this.Discard, "this.Discard");
-				// console.log (this.cashInPlay, this.name,"CashInPlay remaining");
-				// console.log (board.gold, "board.gold", "have purchased ", 30 - board.gold, " golds" );
-			
-			} else if ((this.cashInPlay >= 3) && (this.cashInPlay < 6) && 
-			(this.buys > 0)){ // buy silver
-				silver.buy(this);
-				//				// console.log (this.Discard, "this.Discard");
-				// console.log (this.cashInPlay, this.name,"CashInPlay remaining");
-				// console.log (board.silver, "board.silver", "have purchased ", 40 - board.silver, " silvers" );
-
-			};
-				//}
-			
-			
-		}
 
 
 		var games = {}
@@ -694,8 +699,8 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 				playerOne.endGame();  // discard hand to 0 (later will count vic tokens etc)
 				playerTwo.endGame();  // discard hand to 0 (later will count vic tokens etc)
 				
-				console.log("ONE",playerOne.printDeck2());
-				console.log("TWO",playerTwo.printDeck2());
+//				console.log("ONE",playerOne.printDeck2());
+//				console.log("TWO",playerTwo.printDeck2());
 				var tempTotalOne = 0;
 				var tempTotalTwo = 0;
 			 tempTotalOne = playerOne.deck.concat(playerOne.discard.concat(playerOne.inPlay.concat(playerOne.hand))).map
@@ -756,7 +761,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 	
 	}
 	
-		playGames(500);
+		playGames(3000);
 
 	
 	
