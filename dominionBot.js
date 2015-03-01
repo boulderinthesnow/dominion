@@ -542,9 +542,14 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 				dutchy.buy(this);
 			}
 			
+			if ((this.cashInPlay >= 2) && (this.cashInPlay < 5) && (board.province <= 3) && 
+				(this.buys > 0)){
+					estate.buy(this);
+				}
+			
 			
 			if ((this.cashInPlay >= 6) && (this.cashInPlay < 8) && 
-			(this.buys > 0)){ // buy gold
+			(this.buys > 0) && (board.gold > 0)){ // buy gold
 				gold.buy(this);
 				//				// console.log (this.Discard, "this.Discard");
 				// console.log (this.cashInPlay, this.name,"CashInPlay remaining");
@@ -573,6 +578,11 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 			if ((this.cashInPlay >= 5) && (this.cashInPlay < 8) && (board.province <= 5) && (board.dutchy > 0) &&
 			(this.buys > 0)){ // buy dutchy
 				dutchy.buy(this);
+			}
+			
+			if ((this.cashInPlay >= 2) && (this.cashInPlay < 5) && (board.province <= 3) && 
+			(this.buys > 0)){
+				estate.buy(this);
 			}
 			// tell me how much $ is in play (combined)
 			//this.cashInPlay = this.cashInPlay.reduce(function(a,b){return a + b},0);
