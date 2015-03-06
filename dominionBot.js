@@ -26,6 +26,7 @@
 // only start buying estate when the game is close and you aren't ahead
 // if other player can win on next turn if they buy last province, always buy a green card
 
+//http://wiki.dominionstrategy.com/index.php/Gameplay
 
 // find out how reference the player name in the stats
 
@@ -94,6 +95,13 @@ var victoryCards = [estate, dutchy, province]
 // basic supply cards
 var smithy = new Card("smithy", 4, 0, 0, 1);
 
+// drawing a card should be it's own function
+// drawACard(5) should draw 5 cards, and if needbe, shuffle and draw
+
+smithy.action = function(player){
+	
+}
+
 
 var numberOfPlayers = 2
 var gameCount = 0
@@ -136,6 +144,9 @@ var board = {
 	copper: 60,
 	trash: 0,
 	curse: 20,
+	// kingdom cards
+	smithy: 10,
+	
 	reset: function (){
 		this.province = 12;
 		this.dutchy = 12;
@@ -146,6 +157,7 @@ var board = {
 		this.copper = 60;
 		this.trash = 0;	
 		this.curse = 20;
+		this.smithy = 10;
 	}
 };
 
@@ -248,7 +260,7 @@ Player.prototype.printDeck2 = function () {
 	return Object.keys(counts).map(function(x) {return x + ": " + counts[x]}).join(", ");
 }
 
-// count all copies of (card) and return that number $$$ - not working
+// count all copies of (card) and return that number
 Player.prototype.cardCountOf = function (cardName) {
 	var tempTotal = 0;
 	var tempCount = this.deck.concat(this.inPlay.concat(this.hand.concat(this.discard.concat)))
@@ -262,11 +274,11 @@ Player.prototype.cardCountOf = function (cardName) {
 	for (var i in tempCount) {
 				var x = tempCount[i];
 				if (x.card === cardName) { 
-					console.log (x.card)
+//					console.log (x.card)
 					tempTotal += 1
 				}
 			}
-	console.log (tempTotal)
+	return (tempTotal)
 	//	return tempCount;
 	
 }
@@ -318,10 +330,36 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 	// draw 5 cards from the deck
 	// interate over deck, push to new array until i = 4
 	// shift deck arr by 5
+	
+	// universal draw a card function, pass # of cards to draw
+	Player.prototype.drawCard = function(numCards) {
+		// do until numCards
+		for (i = 0; i < numCards; i++){
+			// if deck, draw a card
+			if (this.deck.length > 0){
+				this.hand.push(this.deck[0]);
+				this.deck.shift();
+				// if no deck, shuffle discard into deck
+			} else if (this.deck.length === 0){
+				shuffleArray(this.discard);
+				while (this.discard.length > 0){ // put discard into deck
+					this.deck.push(this.discard[0]);
+					this.discard.shift();
+				}
+				// if deck draw a card
+				if (this.deck.length > 0){
+					this.hand.push(this.deck[0]);
+					this.deck.shift();
+				}
+			}
+		
+		}
+	}
 
 	Player.prototype.drawFive = function() {
+		this.drawCard(5)
 		
-		
+/*
 		while ((this.hand.length < 5) && (this.deck.length > 0)){
 //		 console.log ("drawing 5 process started...")
 			this.hand.push(this.deck[0]);
@@ -329,7 +367,8 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 			//				// console.log(playerOneHand.length, "playerOneHand.length")
 			//				// console.log(playerOneDeck[0], "playerOneDeck[0]");
 			this.deck.shift();	
-		}
+		}*/
+
 		
 	}
 
@@ -410,7 +449,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 				this.deck.push(this.discard[0]);
 				this.discard.shift();
 			}
-			console.log (this.cardCountOf("gold"));
+			console.log (this.cardCountOf("estate"), "estate");
 		
 		}
 
@@ -705,16 +744,10 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 				if (gameCount % 2 === 0){temp = 1};
 				if (gameCount % 2 !== 0){temp = 2};
 				
-				fishBait = 0
 		
 				while (board.province > 0){ 
-					if (board.province === 12){
-						fishBait +=1
-						if (fishBait === 100){
-							console.log (board.province, "board.province")
-							throw "a goose";
-						}
-					}
+
+	
 					//console.log ("dickfingers")
 					
 					//console.log("1hand   ",playerOne.printHand());
@@ -753,10 +786,10 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 				var tempTotalTwo = 0;
 			 tempTotalOne = playerOne.deck.concat(playerOne.discard.concat(playerOne.inPlay.concat(playerOne.hand))).map
 				(function(x) {return x.vicPoints}).reduce(function(x,y){return x+y},0) // add all vicPoints everywhere, 3 for each game for the starting estate
-				console.log (tempTotalOne, "tempTotalOne")
+//				console.log (tempTotalOne, "tempTotalOne")
 			 tempTotalTwo = playerTwo.deck.concat(playerTwo.discard.concat(playerTwo.inPlay.concat(playerTwo.hand))).map
 				(function(x) {return x.vicPoints}).reduce(function(x,y){return x+y},0)			
-				console.log (tempTotalTwo, "tempTotalTwo")
+//				console.log (tempTotalTwo, "tempTotalTwo")
 /*
 			if (tempTotalOne + tempTotalTwo != 78){
 					console.log ('BLLLLARRRRRGGHHHH');
@@ -797,7 +830,8 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 			games.winsPercentPlayerOne = (Math.floor((games.winsPlayerOne / gameCount )*100) + "%"); // ### move this to a better place -- runs every time
 			games.winsPercentPlayerTwo = (Math.floor((games.winsPlayerTwo / gameCount )*100) + "%");
 			games.tiesPercentPlayersBoth = (Math.floor((games.tiesPlayersBoth / gameCount )*100) + "%");
-
+			games.differencePercentPlayersBoth = (((games.winsPlayerOne / gameCount)*100) - ((games.winsPlayerTwo / gameCount)*100) + "%")
+			
 			board.reset(board)   // reset board between games
 			playerOne.reset();
 			playerTwo.reset();
@@ -810,7 +844,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 	
 	}
 	
-		playGames(20);
+		playGames(20000);
 
 	
 	
