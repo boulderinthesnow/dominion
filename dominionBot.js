@@ -355,6 +355,20 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		
 		}
 	}
+	
+	Player.prototype.discardHandCard = function(numCards) {
+		for (i = 0 ; i < numCards; i++){
+				this.discard.push(this.hand[0]);
+				this.hand.shift();
+			};
+		}
+		
+		Player.prototype.discardInPlay = function() {
+				while (this.inPlay.length > 0){  // discard inPlay down to 0
+					this.discard.push(this.inPlay[0]);
+					this.inPlay.shift();
+				}
+		}
 
 	Player.prototype.drawFive = function() {
 		this.drawCard(5)
@@ -467,18 +481,30 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 			if (this.buys > 0) {this.stats.notEnoughCash += 1}
 			// console.log ("discardHandDrawFive process beginning...");
 			// console.log ("Discarding this.Hand process started...")
+			this.discardHandCard(this.hand.length)
+/*
 			while (this.hand.length > 0){   // discard hand down to 0
 				this.discard.push(this.hand[0]);
 				this.hand.shift();
-			};
+			};*/
+
 			// console.log (this.hand.length, "Cards in hand");
 	
+			this.discardInPlay()
+			
+			if (this.hand.length < 5){
+				this.drawCard(5)
+			}
+/*
 			while (this.inPlay.length > 0){  // discard inPlay down to 0
 				this.discard.push(this.inPlay[0]);
 				this.inPlay.shift();
-			}
+			}*/
+
 			// console.log(this.inPlay.length, "Cards in play");
 			// console.log(this.discard.length, "Cards in discard");
+	
+/*
 			if ((this.hand.length < 5 ) && (this.deck.length >= 5 )){
 	//			console.log ("foo");
 				while (this.hand.length < 5){
@@ -487,11 +513,17 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 					//console.log ("Drawing a card...", this.hand.length, "cards in hand,", 
 					//this.deck.length, "cards in deck" );
 				};
-			};
+			};*/
+
 			// console.log (this.deck.length, "Cards in deck");
 			// console.log ((this.deck.length + this.discard.length + this.hand.length + this.inPlay.length), "total cards for", this.name)
 			// if deck length is < 5, draw until deck length is 0
 			// shuffle discard, put discard into deck, draw until hand is 5
+			
+			
+			
+
+/*
 			if ((this.hand.length < 5) && (this.deck.length < 5 )) {
 				// while hand is < 5 and deck cards above 0
 				while (this.hand.length < 5 && this.deck.length > 0){ 
@@ -516,7 +548,12 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 					}
 				};	
 		
-			};
+			};*/
+
+
+
+
+
 			// if deck is 0, and discard pile > 0, shuffle discard into deck
 			/*
 			if ((this.Deck.length === 0) && (this.Discard.length > 0)){
@@ -844,7 +881,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 	
 	}
 	
-		playGames(20000);
+		playGames(5);
 
 	
 	
