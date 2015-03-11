@@ -12,7 +12,7 @@
 // Nick: can I remove the turnsToWin stat when I log everything in the .total?
 	// I can't say if != x then return things, but why?
 // Nick: sometimes one player doesn't buy ANYTHING all game just before the infinite loop
-// the discard is shuffing back into the deck after the first 5 cards are drawn. It should only shuffle the deck when the deck has reached 0.
+// the discard is shuffing back into the deck after the first 5 cards are drawn. It should only shuffle the deck when the deckPointsk has reached 0.
 
 
 // upgrade .stats.vicPoints to calculate after every phase of each turn -- use it to track changes over time during a game
@@ -49,12 +49,13 @@ console = {
 
 
 
-function Card(name, cost, vicPoints, cash, exist) {
+function Card(name, cost, vicPoints, cash, playValue) {
 	this.card = name;
 	this.cost = cost;
 	this.vicPoints = vicPoints;
 	this.cash = cash;
 	this.exist = 1;
+	this.playValue = playValue;
 }
 
 Card.prototype.buy = function(player) {
@@ -68,6 +69,7 @@ Card.prototype.buy = function(player) {
 	
 	player.totals.buy += 1   // add buy to totals
 	player.totals[this.card] += 1  // add gold to totals
+	//console.log("Just got",player.printAll());
 }
 
 
@@ -76,30 +78,52 @@ Card.prototype.buy = function(player) {
 //var copper = {card: "copper", cost: 0, vicPoints: 0, cash: 1, exist: 1};
 //var silver = {card: "silver", cost: 3, vicPoints: 0, cash: 2, exist: 1};
 //var gold =   {card: "gold", cost: 6, vicPoints: 0, cash: 3, exist: 1};
-var copper = new Card("copper", 0, 0, 1, 1);
-var silver = new Card("silver", 3, 0, 2, 1);
-var gold   = new Card("gold", 6, 0, 3, 1);
+var copper = new Card("copper", 0, 0, 1, -1);
+var silver = new Card("silver", 3, 0, 2, -1);
+var gold   = new Card("gold", 6, 0, 3, -1);
 
 var moneyCards = [copper, silver, gold]
 
 //var estate = 	{card: "estate", cost: 2, vicPoints: 1, cash: 0, exist: 1};
 //var dutchy = 	{card: "dutchy", cost: 5, vicPoints: 3, cash: 0, exist: 1};
 //var province = 	{card: "province", cost: 8, vicPoints: 6, cash: 0, exist: 1};
-var estate = new Card("estate", 2, 1, 0, 1);
-var dutchy = new Card("dutchy", 5, 3, 0, 1);
-var province = new Card("province", 8, 6, 0, 1);
+var estate = new Card("estate", 2, 1, 0, -1);
+var dutchy = new Card("dutchy", 5, 3, 0, -1);
+var province = new Card("province", 8, 6, 0, -1);
 
 
 var victoryCards = [estate, dutchy, province]
 
 // basic supply cards
-var smithy = new Card("smithy", 4, 0, 0, 1);
+var smithy = new Card("smithy", 4, 0, 0, 10);
+var village = new Card("village", 3, 0, 0, 20);
 
 // drawing a card should be it's own function
 // drawACard(5) should draw 5 cards, and if needbe, shuffle and draw
 
 smithy.action = function(player){
-	
+	//console.log(1,player.printHand());
+	player.drawCard(3);
+	for (var i in player.hand) {
+		if (player.hand[i].card == this.card) {
+			var card = player.hand.splice(i,1)[0];
+			//console.log("???",card);
+			player.inPlay.push(card)
+		}
+	}
+	//console.log(2,player.printHand());
+}
+
+village.action = function(player){
+	player.drawCard(1);
+	player.actions += 2;
+	for (var i in player.hand) {
+		if (player.hand[i].card == this.card) {
+			var card = player.hand.splice(i,1)[0];
+			player.inPlay.push(card);
+			break;
+		}
+	}
 }
 
 
@@ -146,6 +170,7 @@ var board = {
 	curse: 20,
 	// kingdom cards
 	smithy: 10,
+	village: 10,
 	
 	reset: function (){
 		this.province = 12;
@@ -158,6 +183,7 @@ var board = {
 		this.trash = 0;	
 		this.curse = 20;
 		this.smithy = 10;
+		this.village = 10;
 	}
 };
 
@@ -190,6 +216,7 @@ function Player(n) {
 	this.stats.notEnoughCash = 0; // not enough $ to buy any money or victory this turn`
 	this.stats.cardTotal
 	this.stats.playedFirst = 0
+	this.stats.cardDraws = 0
 	this.stats.turnsToWin = []  // is an array for later stats calculations
 	
 	this.totals = {};
@@ -204,6 +231,7 @@ function Player(n) {
 	this.totals.notEnoughCash = 0; // not enough $ to buy any money or victory this turn`
 	this.totals.cardTotal
 	this.totals.playedFirst = 0
+	this.totals.cardDraws = 0
 	this.totals.turnsToWin = []  // is an array for later stats calculations
 	this.reset = function() {
 		this.deck = copy(eachPlayersCards);
@@ -227,8 +255,8 @@ function Player(n) {
 		this.stats.silver = 0;
 		this.stats.buy = 0;
 		this.stats.notEnoughCash = 0; // not enough $ to buy any money or victory this turn`
-		this.stats.cardTotal
 		this.stats.playedFirst = 0
+		this.stats.cardDraws = 0
 		this.stats.turnsToWin = []  // is an array for later stats calculations
 	
 	}
@@ -249,6 +277,18 @@ Player.prototype.printDeck = function () {
 	return this.deck.map(function(x) {return x.card}).join(", ");
 }
 
+Player.prototype.printAll = function () {
+	var tempCount = this.deck.concat(this.inPlay.concat(this.hand.concat(this.discard)))
+	var counts = {};
+	for (var c in tempCount) {
+		if (counts[tempCount[c].card] === undefined) {
+			counts[tempCount[c].card] = 0;
+		}
+		counts[tempCount[c].card] += 1;
+	}
+	return Object.keys(counts).map(function(x) {return x + ": " + counts[x]}).join(", ");
+}
+
 Player.prototype.printDeck2 = function () {
 	var counts = {};
 	for (var c in this.deck) {
@@ -260,10 +300,11 @@ Player.prototype.printDeck2 = function () {
 	return Object.keys(counts).map(function(x) {return x + ": " + counts[x]}).join(", ");
 }
 
+
 // count all copies of (card) and return that number
 Player.prototype.cardCountOf = function (cardName) {
 	var tempTotal = 0;
-	var tempCount = this.deck.concat(this.inPlay.concat(this.hand.concat(this.discard.concat)))
+	var tempCount = this.deck.concat(this.inPlay.concat(this.hand.concat(this.discard)))
 	/*for (i = 0 ; i < tempCount.length ; i++){
 		var x = tempCount[i];
 		if (x.card === cardName) { 
@@ -271,11 +312,13 @@ Player.prototype.cardCountOf = function (cardName) {
 			tempTotal += 1
 		}
 	} */
-	for (var i in tempCount) {
+		//console.log(tempCount.map(function(x) {return x.card}).join(";"));
+	for (var i in tempCount) { // $$$
 				var x = tempCount[i];
 				if (x.card === cardName) { 
-//					console.log (x.card)
+					//console.log (x.card)
 					tempTotal += 1
+					//console.log (tempTotal, "tempTotal")
 				}
 			}
 	return (tempTotal)
@@ -339,6 +382,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 			if (this.deck.length > 0){
 				this.hand.push(this.deck[0]);
 				this.deck.shift();
+				this.totals.cardDraws += 1
 				// if no deck, shuffle discard into deck
 			} else if (this.deck.length === 0){
 				shuffleArray(this.discard);
@@ -350,6 +394,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 				if (this.deck.length > 0){
 					this.hand.push(this.deck[0]);
 					this.deck.shift();
+					this.totals.cardDraws += 1
 				}
 			}
 		
@@ -358,10 +403,10 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 	
 	Player.prototype.discardHandCard = function(numCards) {
 		for (i = 0 ; i < numCards; i++){
-				this.discard.push(this.hand[0]);
-				this.hand.shift();
+				this.discard.push(this.hand.shift());
+				
 			};
-		}
+	}
 		
 		Player.prototype.discardInPlay = function() {
 				while (this.inPlay.length > 0){  // discard inPlay down to 0
@@ -401,7 +446,25 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		// this function will buy the most expensive money it can
 		// and put that money in the discard pile	
 
-		Player.prototype.playAction = function(){
+		Player.prototype.pickBestCardToPlay = function () {
+			var sorted = this.hand.sort(function (a,b) {return b.playValue-a.playValue});
+			//console.log(this.hand.length);
+			return sorted[0];
+		}
+
+		Player.prototype.playAction = function() {
+			console.log("\nDo play", this.printHand())
+			this.actions = 1;
+			while (this.actions > 0) {
+				//console.log(this.actions);
+				this.actions -= 1;
+				var card = this.pickBestCardToPlay();
+				if (card && card.action) {
+					console.log("Play my", card.card);
+					card.action(this);
+				}
+			}
+			console.log("End with", this.printHand())
 			
 		}
 		
@@ -463,7 +526,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 				this.deck.push(this.discard[0]);
 				this.discard.shift();
 			}
-			console.log (this.cardCountOf("estate"), "estate");
+			console.log (this.cardCountOf("province"), "province");
 		
 		}
 
@@ -474,6 +537,9 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 
 		//function discardHandDrawFive(playerHand)
 		Player.prototype.discardHandDrawFive = function(){
+			//console.log(1,this.deck.concat(this.inPlay.concat(this.hand.concat(this.discard))).map(function(x) {return x.card}).join(";"));
+			
+			//console.log(99,this.deck.concat(this.inPlay.concat(this.hand.concat(this.discard))).map(function(x) {return x.card}).join(";"));
 			//console.log("Do discard hand:");
 			//console.log(this.printHand());
 			//console.log(this.printDeck());
@@ -490,11 +556,14 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 
 			// console.log (this.hand.length, "Cards in hand");
 	
+			//console.log(100,this.deck.concat(this.inPlay.concat(this.hand.concat(this.discard))).map(function(x) {return x.card}).join(";"));
+			
 			this.discardInPlay()
 			
 			if (this.hand.length < 5){
 				this.drawCard(5)
 			}
+			
 /*
 			while (this.inPlay.length > 0){  // discard inPlay down to 0
 				this.discard.push(this.inPlay[0]);
@@ -610,10 +679,12 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 
 		Player.prototype.turn = function(){
 			this.roundCounter(); // puts round box in front of every turn
+			this.playAction()  // this puts this.Hand $ into play
 			this.playMoney()  // this puts this.Hand $ into play
 			this.buyMoney()  // buys silver and gold for player 1
-			this.discardHandDrawFive()  // this will discard hand and draw 5, 
-
+			this.discardHandDrawFive()  // this will discard hand and draw 5,
+			//console.log(this.name, this.printAll());
+			
 		}
 		
 		Player.prototype.newTurn = function (){
@@ -628,13 +699,45 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 
 		var playerOne = new Player("playerOne");
 		var playerTwo = new Player("playerTwo");
-		
+		//console.log("????",village);
 		playerOne.doSpecial = function() {
+			//console.log("\n\n");
+			var order = [province, gold, estate, smithy, village, silver, dutchy];
+			var cap =   [1000,     1000,     0,       1,       0,   1000, 1000];
+			if (board.province < 3) {
+				order = [province, dutchy, estate, gold, smithy, village, silver];
+				cap =   [1000,     1000,     1000,  1000,      0,        0,     0];
+			}
+			
+			for (var cardIndex in order) {
+				var card = order[cardIndex];
+				//console.log(this.name, "Consider buying", card.card, "I have", this.cardCountOf(card.card), "and cap is", cap[cardIndex])
+				if (this.buys > 0 && board[card.card] > 0 && this.cashInPlay >= card.cost
+					&& cap[cardIndex] > this.cardCountOf(card.card)) {
+						//console.log("yes");
+					card.buy(this);
+				}
+			}
+			
+			
+			return;
+			
 			if (this.cashInPlay < 3){
 				this.stats.notEnoughCash += 1
 				this.totals.notEnoughCash += 1
 				
 			};
+			
+			console.log (this.cashInPlay >= 4, this.cashInPlay < 6, this.cardCountOf("smithy")  < 3, 
+				this.buys > 0, board.smithy > 0, this.cardCountOf("smithy"))
+			
+			
+			if ((this.cashInPlay >= 4) && (this.cashInPlay < 6) && (this.cardCountOf("smithy") < 3) && 
+				(this.buys > 0) && (board.smithy > 0)){
+					smithy.buy(this)
+					console.log ("yatziee")
+					console.log(this.cardCountOf("smithy"))
+				}
 			// tell me how much $ is in play (combined)
 			//this.cashInPlay = this.cashInPlay.reduce(function(a,b){return a + b},0);
 			// console.log (this.cashInPlay, this.name, ": cash in play")
@@ -881,7 +984,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 	
 	}
 	
-		playGames(5);
+		playGames(1000);
 
 	
 	
