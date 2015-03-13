@@ -97,6 +97,9 @@ var victoryCards = [estate, dutchy, province]
 // basic supply cards
 var smithy = new Card("smithy", 4, 0, 0, 10);
 var village = new Card("village", 3, 0, 0, 20);
+var laboratory = new Card("laboratory", 5, 0, 0, 30);
+var councilRoom = new Card("councilRoom", 5, 0, 0, 40);
+
 
 // drawing a card should be it's own function
 // drawACard(5) should draw 5 cards, and if needbe, shuffle and draw
@@ -121,10 +124,38 @@ village.action = function(player){
 		if (player.hand[i].card == this.card) {
 			var card = player.hand.splice(i,1)[0];
 			player.inPlay.push(card);
+			console.log ("I have", player.actions, "actions")
 			break;
 		}
 	}
 }
+
+laboratory.action = function(player){
+	player.drawCard(2);
+	player.actions += 1;
+	for (var i in player.hand) {
+		if (player.hand[i].card == this.card) {
+			var card = player.hand.splice(i,1)[0];
+			player.inPlay.push(card);
+			console.log ("I have", player.actions, "actions")
+			break;
+		}
+	}
+}
+
+councilRoom.action = function(player){
+	player.drawCard(4);
+	player.buys += 1;
+	for (var i in player.hand) {
+		if (player.hand[i].card == this.card) {
+			var card = player.hand.splice(i,1)[0];
+			player.inPlay.push(card);
+			console.log ("I have", player.buys, "buys")
+			break;
+		}
+	}
+}
+
 
 
 var numberOfPlayers = 2
@@ -168,9 +199,12 @@ var board = {
 	copper: 60,
 	trash: 0,
 	curse: 20,
+	
 	// kingdom cards
 	smithy: 10,
 	village: 10,
+	laboratory: 10,
+	councilRoom: 10,
 	
 	reset: function (){
 		this.province = 12;
@@ -182,12 +216,16 @@ var board = {
 		this.copper = 60;
 		this.trash = 0;	
 		this.curse = 20;
+		
+		// kingdom cards
 		this.smithy = 10;
 		this.village = 10;
+		this.laboratory = 10;
+		this.councilRoom = 10;
 	}
 };
 
-
+	
 function copy(deck) {
 	return deck.map(function(x) {return x});
 }
@@ -322,7 +360,6 @@ Player.prototype.cardCountOf = function (cardName) {
 				}
 			}
 	return (tempTotal)
-	//	return tempCount;
 	
 }
 
@@ -418,34 +455,10 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 	Player.prototype.drawFive = function() {
 		this.drawCard(5)
 		
-/*
-		while ((this.hand.length < 5) && (this.deck.length > 0)){
-//		 console.log ("drawing 5 process started...")
-			this.hand.push(this.deck[0]);
-			//				// console.log(playerOneHand, "playerOneHand");
-			//				// console.log(playerOneHand.length, "playerOneHand.length")
-			//				// console.log(playerOneDeck[0], "playerOneDeck[0]");
-			this.deck.shift();	
-		}*/
-
 		
 	}
 
-
-
-		// tell me how much money is in the hand
-		//	var handCash = (playerOneHand.map(function(x){return(x.cash)}));
-		//	handCash = handCash.reduce(function(a,b){return a + b});	
-		//	// console.log(handCash)
-
-		//	// console.log (playerOneHand, "playerOneHand");
-		//	// console.log (playerOneDeck, "playerOneDeck");
-
-		// buy the most expensive money card you can
-
-		// this function will buy the most expensive money it can
-		// and put that money in the discard pile	
-
+		// pick the order of the best card to PLAY
 		Player.prototype.pickBestCardToPlay = function () {
 			var sorted = this.hand.sort(function (a,b) {return b.playValue-a.playValue});
 			//console.log(this.hand.length);
@@ -453,6 +466,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		}
 
 		Player.prototype.playAction = function() {
+			console.log (this.name)
 			console.log("\nDo play", this.printHand())
 			this.actions = 1;
 			while (this.actions > 0) {
@@ -497,16 +511,8 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 
 
 		Player.prototype.buyMoney = function() {
-			// console.log ("buying money process started...")
-			// console.log ("Buying money for player...")
-			// tell me how much $ is in play (arr)
-
-			//this.cashInPlay = (this.inPlay.map(function(x){return x.cash}));
-			//console.log(this.cashInPlay.reduce(function(a,b){return a + b},0));
 			
 			this.cashInPlay = (this.inPlay.map(function(x){return x.cash})).reduce(function(a,b){return a + b},0);
-//			console.log(this.cashInPlay, "cashInPlay", this.name)
-//			console.log(this.inPlay.map(function(x){return x.cash}))
 			
 			this.doSpecial();
 			
@@ -526,7 +532,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 				this.deck.push(this.discard[0]);
 				this.discard.shift();
 			}
-			console.log (this.cardCountOf("province"), "province");
+			console.log (this.cardCountOf("councilRoom"), "councilRoom");
 		
 		}
 
@@ -537,127 +543,30 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 
 		//function discardHandDrawFive(playerHand)
 		Player.prototype.discardHandDrawFive = function(){
-			//console.log(1,this.deck.concat(this.inPlay.concat(this.hand.concat(this.discard))).map(function(x) {return x.card}).join(";"));
-			
-			//console.log(99,this.deck.concat(this.inPlay.concat(this.hand.concat(this.discard))).map(function(x) {return x.card}).join(";"));
-			//console.log("Do discard hand:");
-			//console.log(this.printHand());
-			//console.log(this.printDeck());
-			//console.log(this.printDiscard());
+
 			if (this.buys > 0) {this.stats.notEnoughCash += 1}
 			// console.log ("discardHandDrawFive process beginning...");
 			// console.log ("Discarding this.Hand process started...")
-			this.discardHandCard(this.hand.length)
-/*
-			while (this.hand.length > 0){   // discard hand down to 0
-				this.discard.push(this.hand[0]);
-				this.hand.shift();
-			};*/
-
-			// console.log (this.hand.length, "Cards in hand");
-	
-			//console.log(100,this.deck.concat(this.inPlay.concat(this.hand.concat(this.discard))).map(function(x) {return x.card}).join(";"));
 			
+			// discard everything
+			this.discardHandCard(this.hand.length)	
 			this.discardInPlay()
 			
 			if (this.hand.length < 5){
 				this.drawCard(5)
 			}
 			
-/*
-			while (this.inPlay.length > 0){  // discard inPlay down to 0
-				this.discard.push(this.inPlay[0]);
-				this.inPlay.shift();
-			}*/
-
-			// console.log(this.inPlay.length, "Cards in play");
-			// console.log(this.discard.length, "Cards in discard");
-	
-/*
-			if ((this.hand.length < 5 ) && (this.deck.length >= 5 )){
-	//			console.log ("foo");
-				while (this.hand.length < 5){
-					this.hand.push(this.deck[0]);
-					this.deck.shift();
-					//console.log ("Drawing a card...", this.hand.length, "cards in hand,", 
-					//this.deck.length, "cards in deck" );
-				};
-			};*/
-
-			// console.log (this.deck.length, "Cards in deck");
-			// console.log ((this.deck.length + this.discard.length + this.hand.length + this.inPlay.length), "total cards for", this.name)
-			// if deck length is < 5, draw until deck length is 0
-			// shuffle discard, put discard into deck, draw until hand is 5
-			
-			
-			
-
-/*
-			if ((this.hand.length < 5) && (this.deck.length < 5 )) {
-				// while hand is < 5 and deck cards above 0
-				while (this.hand.length < 5 && this.deck.length > 0){ 
-					this.hand.push(this.deck[0]);
-					this.deck.shift();
-				};
-				// if hand is < 5 and there are no cards in the deck, shuffle discard
-				// back into the deck, and draw until you have 5 cards
-				if ((this.hand.length < 5) && (this.deck.length === 0)){
-					shuffleArray(this.discard);      // shuffle discard
-					while (this.discard.length > 0){ // put discard into deck
-						this.deck.push(this.discard[0]);
-						this.discard.shift();
-						//				// console.log ("pushing discard to deck: Deck Size",this.deck.length);
-					};
-					// draw from new shuffled deck until have 5 cards in hand
-					while ((this.hand.length < 5) && (this.deck.length > 0)){
-						this.hand.push(this.deck[0]);
-						this.deck.shift();	
-						// console.log ("pushing deck to hand until 5:",this.hand.length);
-				
-					}
-				};	
-		
-			};*/
-
-
-
-
-
-			// if deck is 0, and discard pile > 0, shuffle discard into deck
-			/*
-			if ((this.Deck.length === 0) && (this.Discard.length > 0)){
-			// console.log (this.Deck.length, "cards in deck, shuffling discard into deck")
-			shuffleArray(this.Discard);
-			while (this.Discard.length > 0){
-			this.Deck.push(this.Discard[0]);
-			this.Discard.shift();
-			};
-		
-			};*/
-			// console.log(playerOne.discardHandAndDrawFive)
-
-			// console.log(this.deck.length, "Cards in deck");
-	
-			discardHandDrawFiveCount += 1
+			// reset # of buys to 1 for new hand
 			this.buys = 1
-			this.stats.turns += 1	
 			
+			// stats
+			this.stats.turns += 1	
+			discardHandDrawFiveCount += 1
 			this.totals.turns += 1
 			
 
-			//console.log("End discard hand:");
-			//console.log(this.printHand());
-			//console.log(this.printDeck());
-			//console.log(this.printDiscard());	
-			
-			
-			// console.log ("Discarded and draw 5 has occurred ", discardHandDrawFiveCount, " times")	
 		}
 
-		// create a player prototype that checks to see if the total number of cards has decreased
-		// freak out if it has
-
-		// if card card is reduced over previous total, alert
 
 		Player.prototype.roundCounter = function(){
 			// console.log ("************")
@@ -702,11 +611,11 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		//console.log("????",village);
 		playerOne.doSpecial = function() {
 			//console.log("\n\n");
-			var order = [province, gold, estate, smithy, village, silver, dutchy];
-			var cap =   [1000,     1000,     0,       1,       0,   1000, 1000];
+			var order = [province, gold, estate, laboratory, councilRoom, smithy, village, silver, dutchy];
+			var cap =   [1000,     1000,     0,    		  0,	       3,     0,       0,   1000, 	1000];
 			if (board.province < 3) {
-				order = [province, dutchy, estate, gold, smithy, village, silver];
-				cap =   [1000,     1000,     1000,  1000,      0,        0,     0];
+				order = [province, dutchy, estate, gold, laboratory, councilRoom,smithy, village, silver];
+				cap =   [1000,     1000,     1000,  1000,         0,           0,      0,       0,     0];
 			}
 			
 			for (var cardIndex in order) {
@@ -984,7 +893,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 	
 	}
 	
-		playGames(1000);
+		playGames(2000);
 
 	
 	
@@ -1112,6 +1021,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 
 		Player.prototype.allStats = function(){
 			// console.log (this.stats.vicPoints)
+			console.log ("\n")
 			for (x in this.totals){  // print out playerOne stats
 				 console.log (x, ":", this.totals[x])
 			}
