@@ -269,8 +269,9 @@ function Player(n) {
 	this.totals.notEnoughCash = 0; // not enough $ to buy any money or victory this turn`
 	this.totals.cardTotal
 	this.totals.playedFirst = 0
+	this.hide = {}
 	this.totals.cardDraws = 0
-	this.totals.turnsToWin = []  // is an array for later stats calculations
+	this.hide.turnsToWin = []  // is an array for later stats calculations
 	this.reset = function() {
 		this.deck = copy(eachPlayersCards);
 		shuffleArray(this.deck);
@@ -362,6 +363,19 @@ Player.prototype.cardCountOf = function (cardName) {
 	return (tempTotal)
 	
 }
+
+
+Player.prototype.purchasePower = function () {
+	// tell me how much money I have in each hand
+	this.printAll
+	// push it to an array
+	// will the avg be useful?
+	// return the mean, sd & varience $ of all the hands in the game
+	
+	// at the end of the game tell me how much $ is in all the player's cards
+	// 
+}
+
 
 Player.prototype.printInPlay = function () {
 	return this.inPlay.map(function(x) {return x.card}).join(", ");
@@ -858,14 +872,14 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 			
 			if (tempTotalOne > tempTotalTwo){   // see who wins
 //				console.log (tempTotalOne, tempTotalTwo)
-				playerOne.totals.turnsToWin.push (playerOne.stats.turns)
+				playerOne.hide.turnsToWin.push (playerOne.stats.turns)
 				// console.log ("Player 1 Wins!")
 				games.winsPlayerOne += 1
 	//			playerOne.stats.turnsToWin.push(playerOne.stats.turns);
 			}
 			if (tempTotalTwo > tempTotalOne ){
 //				console.log (tempTotalOne, tempTotalTwo)
-				playerTwo.totals.turnsToWin.push (playerTwo.stats.turns)
+				playerTwo.hide.turnsToWin.push (playerTwo.stats.turns)
 								
 //				console.log (playerOne.countVicPoints())
 				// console.log ("Player 2 Wins!")
@@ -992,12 +1006,12 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		
 		Player.prototype.math = function (){  // used to store calculations
 		//mean turns to win or tie
-			this.totals.meanTurnsToWin = (this.totals.turnsToWin.reduce(function(a,b){return a + b},0) / this.totals.turnsToWin.length)
+			this.totals.meanTurnsToWin = (this.hide.turnsToWin.reduce(function(a,b){return a + b},0) / this.hide.turnsToWin.length)
 	    	
 			// temp === this.totals.meanTurnsToWin, but must be separate
-			temp = (this.totals.turnsToWin.reduce(function(a,b){return a + b},0) / this.totals.turnsToWin.length)
+			temp = (this.hide.turnsToWin.reduce(function(a,b){return a + b},0) / this.hide.turnsToWin.length)
 			// calculates variance
-			this.totals.variance = this.totals.turnsToWin.map(function(x){return Math.pow((x - temp),2)}).reduce(function(a,b){return a + b},0) / this.totals.turnsToWin.length;
+			this.totals.variance = this.hide.turnsToWin.map(function(x){return Math.pow((x - temp),2)}).reduce(function(a,b){return a + b},0) / this.hide.turnsToWin.length;
 			// calculates SD
 			this.totals.standardDev = Math.sqrt(this.totals.variance);
 			
