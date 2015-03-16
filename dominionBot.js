@@ -90,15 +90,17 @@ var moneyCards = [copper, silver, gold]
 var estate = new Card("estate", 2, 1, 0, -1);
 var dutchy = new Card("dutchy", 5, 3, 0, -1);
 var province = new Card("province", 8, 6, 0, -1);
+var curse = new Card("curse", 0, -1, 0, -1);
 
 
 var victoryCards = [estate, dutchy, province]
 
 // basic supply cards
 var smithy = new Card("smithy", 4, 0, 0, 10);
-var village = new Card("village", 3, 0, 0, 20);
-var laboratory = new Card("laboratory", 5, 0, 0, 30);
-var councilRoom = new Card("councilRoom", 5, 0, 0, 40);
+var village = new Card("village", 3, 0, 0, 40);
+var laboratory = new Card("laboratory", 5, 0, 0, 50);
+var councilRoom = new Card("councilRoom", 5, 0, 0, 30);
+var witch = new Card("witch", 5, 0, 0, 20);
 
 
 // drawing a card should be it's own function
@@ -156,13 +158,33 @@ councilRoom.action = function(player){
 	}
 }
 
+witch.action = function(player){
+	player.drawCard(2);
+	playerTwo.curse()
+	for (var i in player.hand) {
+		if (player.hand[i].card == this.card) {
+			var card = player.hand.splice(i,1)[0];
+			player.inPlay.push(card);
+			console.log ("I have", player.actions, "actions")
+			break;
+		}
+	}
+}
+
 
 
 var numberOfPlayers = 2
 var gameCount = 0
 var drawFiveCount = 0
 
-
+Player.prototype.curse = function(){	
+	this.discard.push(curse);   // add to deck
+	board[curse.card] -= 1	    // subtract 1 from supply
+//	console.log (board[this.card], this.card, "board[this.card]")
+	this.stats[curse.card] += 1  // add gold to stats
+	this.totals[curse.card] += 1  // add curse to totals
+	//console.log("Just got",player.printAll());
+}
 
 // create stack for each card pile on the table
 // victory
@@ -205,6 +227,7 @@ var board = {
 	village: 10,
 	laboratory: 10,
 	councilRoom: 10,
+	witch: 10,
 	
 	reset: function (){
 		this.province = 12;
@@ -222,6 +245,7 @@ var board = {
 		this.village = 10;
 		this.laboratory = 10;
 		this.councilRoom = 10;
+		this.witch = 10;
 	}
 };
 
@@ -366,14 +390,15 @@ Player.prototype.cardCountOf = function (cardName) {
 
 
 Player.prototype.purchasePower = function () {
-	// tell me how much money I have in each hand
-	this.printAll
-	// push it to an array
-	// will the avg be useful?
-	// return the mean, sd & varience $ of all the hands in the game
-	
-	// at the end of the game tell me how much $ is in all the player's cards
-	// 
+		
+	var handCash = 0	
+	for (var c in this.hand) {
+		var x = this.hand[c]		
+		if (x.cash > 0) {
+			handCash += x.cash
+		}
+	}
+ 	   return handCash
 }
 
 
@@ -482,6 +507,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		Player.prototype.playAction = function() {
 			console.log (this.name)
 			console.log("\nDo play", this.printHand())
+			console.log("Purchase power", this.purchasePower())
 			this.actions = 1;
 			while (this.actions > 0) {
 				//console.log(this.actions);
@@ -546,7 +572,8 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 				this.deck.push(this.discard[0]);
 				this.discard.shift();
 			}
-			console.log (this.cardCountOf("councilRoom"), "councilRoom");
+			console.log (this.cardCountOf("witch"), "witch");
+			console.log (this.cardCountOf("curse"), "curse");
 		
 		}
 
@@ -625,11 +652,11 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		//console.log("????",village);
 		playerOne.doSpecial = function() {
 			//console.log("\n\n");
-			var order = [province, gold, estate, laboratory, councilRoom, smithy, village, silver, dutchy];
-			var cap =   [1000,     1000,     0,    		  0,	       3,     0,       0,   1000, 	1000];
+			var order = [province, gold, estate, laboratory, councilRoom, witch, smithy, village, silver, dutchy];
+			var cap =   [1000,     1000,     0,    		  0,	       0,     2,       0,       0,   1000, 	1000];
 			if (board.province < 3) {
-				order = [province, dutchy, estate, gold, laboratory, councilRoom,smithy, village, silver];
-				cap =   [1000,     1000,     1000,  1000,         0,           0,      0,       0,     0];
+				order = [province, dutchy, estate, gold, laboratory, councilRoom, witch, smithy, village, silver];
+				cap =   [1000,     1000,     1000,  1000,         0,           0,      0,     0,       0,     0];
 			}
 			
 			for (var cardIndex in order) {
@@ -907,7 +934,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 	
 	}
 	
-		playGames(2000);
+		playGames(20);
 
 	
 	
