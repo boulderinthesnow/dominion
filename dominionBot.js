@@ -101,7 +101,9 @@ var village = new Card("village", 3, 0, 0, 40);
 var laboratory = new Card("laboratory", 5, 0, 0, 50);
 var councilRoom = new Card("councilRoom", 5, 0, 0, 30);
 var witch = new Card("witch", 5, 0, 0, 20);
-
+var woodcutter = new Card("woodcutter", 3, 0, 2, 25)
+var market = new Card("market", 5, 0, 1, 60)
+	
 
 // drawing a card should be it's own function
 // drawACard(5) should draw 5 cards, and if needbe, shuffle and draw
@@ -171,6 +173,46 @@ witch.action = function(player){
 	}
 }
 
+woodcutter.action = function(player){
+	player.buys += 1;
+	for (var i in player.hand) {
+		if (player.hand[i].card == this.card) {
+			var card = player.hand.splice(i,1)[0];
+			player.inPlay.push(card);
+			console.log ("I have", player.buys, "buys")
+			break;
+		}
+	}
+}
+
+market.action = function(player){
+	player.drawCard(1);
+	player.buys += 1
+	player.actions += 1
+	for (var i in player.hand) {
+		if (player.hand[i].card == this.card) {
+			var card = player.hand.splice(i,1)[0];
+			player.inPlay.push(card);
+			console.log ("I have", player.buys, "buys")
+			break;
+		}
+	}
+}
+
+mine.action = function(player){
+	player.drawCard(1);
+	player.buys += 1
+	player.actions += 1
+	for (var i in player.hand) {
+		if (player.hand[i].card == this.card) {
+			var card = player.hand.splice(i,1)[0];
+			player.inPlay.push(card);
+			console.log ("I have", player.actions, "actions")
+			break;
+		}
+	}
+}
+
 
 
 var numberOfPlayers = 2
@@ -185,31 +227,6 @@ Player.prototype.curse = function(){
 	this.totals[curse.card] += 1  // add curse to totals
 	//console.log("Just got",player.printAll());
 }
-
-// create stack for each card pile on the table
-// victory
-/*
-var provinceBoard = 12;
-var board.dutchy = 12;
-var estateBoard = 12;
-
-// monies
-var board.gold = 30;
-var board.silver = 40;
-var board.copper = 60;*/
-
-/*
-var boardSource = {  
-	province: 12,
-	dutchy: 12,
-	estate: 12,
-	
-	gold: 30,
-	silver: 40,
-	copper: 60
-};*/
-
-
 
 var board = {   
 	province: 12,
@@ -228,6 +245,8 @@ var board = {
 	laboratory: 10,
 	councilRoom: 10,
 	witch: 10,
+	woodcutter: 10,
+	market: 10,
 	
 	reset: function (){
 		this.province = 12;
@@ -246,6 +265,8 @@ var board = {
 		this.laboratory = 10;
 		this.councilRoom = 10;
 		this.witch = 10;
+		this.woodcutter = 10;
+		this.market = 10;
 	}
 };
 
@@ -386,6 +407,20 @@ Player.prototype.cardCountOf = function (cardName) {
 			}
 	return (tempTotal)
 	
+}
+
+Player.prototype.trashWorstTreasure = function () {
+	// tell me the $ values of each treasure in player.hand
+	for (x in this.hand) {
+		var q = this.hand[x]
+		console.log (q.card)
+		if q.card === "copper"
+		board.trash += player.hand.splice(i,1)[0];
+			
+			
+	}
+	// splice the worst treasure from the hand
+	// move the spliced treasure to the trash
 }
 
 
@@ -652,11 +687,11 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		//console.log("????",village);
 		playerOne.doSpecial = function() {
 			//console.log("\n\n");
-			var order = [province, gold, estate, laboratory, councilRoom, witch, smithy, village, silver, dutchy];
-			var cap =   [1000,     1000,     0,    		  0,	       0,     2,       0,       0,   1000, 	1000];
+			var order = [province, gold, estate, laboratory, market, councilRoom, witch, smithy, woodcutter, village, silver, dutchy];
+			var cap =   [1000,     1000,     0,    		  0,	  3,           0,     5,       0,         0,       0,   1000, 	1000];
 			if (board.province < 3) {
-				order = [province, dutchy, estate, gold, laboratory, councilRoom, witch, smithy, village, silver];
-				cap =   [1000,     1000,     1000,  1000,         0,           0,      0,     0,       0,     0];
+				order = [province, dutchy, estate, gold, laboratory, market, councilRoom, witch, smithy, village, woodcutter, silver];
+				cap =   [1000,     1000,     1000,  1000,         0,       0,           0,      0,     0,       0,          0,       0];
 			}
 			
 			for (var cardIndex in order) {
@@ -934,7 +969,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 	
 	}
 	
-		playGames(20);
+		playGames(200);
 
 	
 	
