@@ -103,6 +103,8 @@ var councilRoom = new Card("councilRoom", 5, 0, 0, 30);
 var witch = new Card("witch", 5, 0, 0, 20);
 var woodcutter = new Card("woodcutter", 3, 0, 2, 25)
 var market = new Card("market", 5, 0, 1, 60)
+var mine = new Card("mine", 5, 0, 0, 10)
+
 	
 
 // drawing a card should be it's own function
@@ -200,9 +202,7 @@ market.action = function(player){
 }
 
 mine.action = function(player){
-	player.drawCard(1);
-	player.buys += 1
-	player.actions += 1
+	
 	for (var i in player.hand) {
 		if (player.hand[i].card == this.card) {
 			var card = player.hand.splice(i,1)[0];
@@ -211,6 +211,33 @@ mine.action = function(player){
 			break;
 		}
 	}
+//	console.log ("I have trashed",player.trashWorstTreasure()) ;
+	var trashedCard = player.trashWorstTreasure() ;
+	
+	if ((trashedCard == "copper") && (board.silver > 0)) {
+		board.silver -= 1
+		// if there is a silver on the board
+		// subtract it from the board and add it to the deck
+//		console.log ("BEFORE", player.discard.length)
+		player.discard.push(silver)
+		player.stats.silver += 1
+		player.totals.silver += 1
+		
+//		console.log ("AFTER",player.discard.length)
+	} else if ((trashedCard == "silver") && (board.gold > 0)) {
+		board.gold -= 1
+		// if there is a silver on the board
+		// subtract it from the board and add it to the deck
+//		console.log ("BEFORE", player.discard.length)
+		player.discard.push(gold)
+		player.stats.gold += 1
+		player.totals.gold += 1
+		
+		
+//		console.log ("AFTER",player.discard.length)
+	}
+	
+	
 }
 
 
@@ -236,7 +263,7 @@ var board = {
 	gold: 30,
 	silver: 40,
 	copper: 60,
-	trash: 0,
+	trash: [],
 	curse: 20,
 	
 	// kingdom cards
@@ -247,6 +274,7 @@ var board = {
 	witch: 10,
 	woodcutter: 10,
 	market: 10,
+	mine: 10,
 	
 	reset: function (){
 		this.province = 12;
@@ -256,7 +284,7 @@ var board = {
 		this.gold = 30;
 		this.silver = 40;
 		this.copper = 60;
-		this.trash = 0;	
+		this.trash = [];	
 		this.curse = 20;
 		
 		// kingdom cards
@@ -267,6 +295,7 @@ var board = {
 		this.witch = 10;
 		this.woodcutter = 10;
 		this.market = 10;
+		this.mine = 10;
 	}
 };
 
@@ -411,16 +440,40 @@ Player.prototype.cardCountOf = function (cardName) {
 
 Player.prototype.trashWorstTreasure = function () {
 	// tell me the $ values of each treasure in player.hand
+	// splice the worst treasure from the hand
+	
 	for (x in this.hand) {
 		var q = this.hand[x]
-		console.log (q.card)
-		if q.card === "copper"
-		board.trash += player.hand.splice(i,1)[0];
+//		console.log (q.card, "WOOOOOTTT")
+		if (q.card === "copper") {
+			removedCard = this.hand.splice(x,1)[0]
+			console.log ("I'm getting rid of ", removedCard.card)
+			board.trash.push (removedCard);
+//			console.log ("the trash has", board.trash.length, "cards")
+
+			for (w in board.trash){
+				r = board.trash[w]
+//				console.log (r.card)
+			}
+			return (removedCard.card)
+			
+		}
+		
+		if (q.card === "silver") {
+			removedCard = this.hand.splice(x,1)[0]
+			console.log ("I'm getting rid of ", removedCard.card)
+			board.trash.push (removedCard);
+//			console.log ("the trash has", board.trash.length, "cards")
+			for (w in board.trash){
+				r = board.trash[w]
+//				console.log (r.card)
+			}
+			return (removedCard.card)
+		}
 			
 			
 	}
-	// splice the worst treasure from the hand
-	// move the spliced treasure to the trash
+	// return the cost of the treasure trashed
 }
 
 
@@ -541,8 +594,8 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 
 		Player.prototype.playAction = function() {
 			console.log (this.name)
-			console.log("\nDo play", this.printHand())
-			console.log("Purchase power", this.purchasePower())
+//			console.log("\nDo play", this.printHand())
+//			console.log("Purchase power", this.purchasePower())
 			this.actions = 1;
 			while (this.actions > 0) {
 				//console.log(this.actions);
@@ -607,8 +660,8 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 				this.deck.push(this.discard[0]);
 				this.discard.shift();
 			}
-			console.log (this.cardCountOf("witch"), "witch");
-			console.log (this.cardCountOf("curse"), "curse");
+			console.log (this.cardCountOf("trash"), "trash");
+			console.log (this.cardCountOf("gold"), "gold");
 		
 		}
 
@@ -687,11 +740,11 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		//console.log("????",village);
 		playerOne.doSpecial = function() {
 			//console.log("\n\n");
-			var order = [province, gold, estate, laboratory, market, councilRoom, witch, smithy, woodcutter, village, silver, dutchy];
-			var cap =   [1000,     1000,     0,    		  0,	  3,           0,     5,       0,         0,       0,   1000, 	1000];
+			var order = [province, gold, estate, laboratory, market, councilRoom, witch, mine, smithy, woodcutter, village, silver, dutchy];
+			var cap =   [1000,     1000,     0,    		  0,	  0,           2,     0,    3,      0,         0,       4,   1000, 	1000];
 			if (board.province < 3) {
-				order = [province, dutchy, estate, gold, laboratory, market, councilRoom, witch, smithy, village, woodcutter, silver];
-				cap =   [1000,     1000,     1000,  1000,         0,       0,           0,      0,     0,       0,          0,       0];
+				order = [province, dutchy, estate, gold, laboratory, market, councilRoom, witch, mine,smithy, village, woodcutter, silver];
+				cap =   [1000,     1000,     1000,  1000,         0,       0,           0,    0,    0,     0,       0,          0,       0];
 			}
 			
 			for (var cardIndex in order) {
