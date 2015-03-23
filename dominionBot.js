@@ -47,6 +47,13 @@ console = {
 	log: print
 }
 
+/*
+var prompt = require("prompt");
+prompt.start()
+prompt.get(["asdf"], function(err, result) {
+	console.log(result);
+})
+exit()*/
 
 
 function Card(name, cost, vicPoints, cash, playValue) {
@@ -101,11 +108,13 @@ var village = new Card("village", 3, 0, 0, 40);
 var laboratory = new Card("laboratory", 5, 0, 0, 50);
 var councilRoom = new Card("councilRoom", 5, 0, 0, 30);
 var witch = new Card("witch", 5, 0, 0, 20);
-var woodcutter = new Card("woodcutter", 3, 0, 2, 25)
+var woodcutter = new Card("woodcutter", 3, 0, 2, 15)
 var market = new Card("market", 5, 0, 1, 60)
 var mine = new Card("mine", 5, 0, 0, 10)
+var festival = new Card("festival", 5, 0, 0, 25)
 
-	
+
+var specialMoney = 0	
 
 // drawing a card should be it's own function
 // drawACard(5) should draw 5 cards, and if needbe, shuffle and draw
@@ -219,7 +228,7 @@ mine.action = function(player){
 		// if there is a silver on the board
 		// subtract it from the board and add it to the deck
 //		console.log ("BEFORE", player.discard.length)
-		player.discard.push(silver)
+		player.hand.push(silver)
 		player.stats.silver += 1
 		player.totals.silver += 1
 		
@@ -229,15 +238,29 @@ mine.action = function(player){
 		// if there is a silver on the board
 		// subtract it from the board and add it to the deck
 //		console.log ("BEFORE", player.discard.length)
-		player.discard.push(gold)
+		player.hand.push(gold)
 		player.stats.gold += 1
 		player.totals.gold += 1
 		
 		
 //		console.log ("AFTER",player.discard.length)
 	}
-	
-	
+		
+}
+
+festival.action = function(player){
+	specialMoney += 2;
+	console.log ("I've played a festival and now have", specialMoney, "Special Money")
+	player.buys += 1
+	player.actions += 2
+	for (var i in player.hand) {
+		if (player.hand[i].card == this.card) {
+			var card = player.hand.splice(i,1)[0];
+			player.inPlay.push(card);
+			console.log ("I have", player.buys, "buys")
+			break;
+		}
+	}
 }
 
 
@@ -275,6 +298,7 @@ var board = {
 	woodcutter: 10,
 	market: 10,
 	mine: 10,
+	festival: 10,
 	
 	reset: function (){
 		this.province = 12;
@@ -296,6 +320,7 @@ var board = {
 		this.woodcutter = 10;
 		this.market = 10;
 		this.mine = 10;
+		this.festival = 10;
 	}
 };
 
@@ -445,6 +470,18 @@ Player.prototype.trashWorstTreasure = function () {
 	for (x in this.hand) {
 		var q = this.hand[x]
 //		console.log (q.card, "WOOOOOTTT")
+		if (q.card === "silver") {
+			removedCard = this.hand.splice(x,1)[0]
+			console.log ("I'm getting rid of ", removedCard.card)
+			board.trash.push (removedCard);
+//			console.log ("the trash has", board.trash.length, "cards")
+			for (w in board.trash){
+				r = board.trash[w]
+//				console.log (r.card)
+			}
+			return (removedCard.card)
+		}
+		
 		if (q.card === "copper") {
 			removedCard = this.hand.splice(x,1)[0]
 			console.log ("I'm getting rid of ", removedCard.card)
@@ -459,17 +496,7 @@ Player.prototype.trashWorstTreasure = function () {
 			
 		}
 		
-		if (q.card === "silver") {
-			removedCard = this.hand.splice(x,1)[0]
-			console.log ("I'm getting rid of ", removedCard.card)
-			board.trash.push (removedCard);
-//			console.log ("the trash has", board.trash.length, "cards")
-			for (w in board.trash){
-				r = board.trash[w]
-//				console.log (r.card)
-			}
-			return (removedCard.card)
-		}
+
 			
 			
 	}
@@ -634,14 +661,16 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 			}
 			//			// console.log (playerOneHand, "playerOneHand");
 			//			// console.log (playerOneInPlay, "playerOneInPlay");
+			
 
 		}
 
 
 		Player.prototype.buyMoney = function() {
-			
 			this.cashInPlay = (this.inPlay.map(function(x){return x.cash})).reduce(function(a,b){return a + b},0);
-			
+			this.cashInPlay += specialMoney
+			console.log ("I have ",specialMoney, "specialMoney")
+			console.log("MONEY", this.name, this.cashInPlay);
 			this.doSpecial();
 			
 	
@@ -672,7 +701,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 
 		//function discardHandDrawFive(playerHand)
 		Player.prototype.discardHandDrawFive = function(){
-
+			specialMoney = 0
 			if (this.buys > 0) {this.stats.notEnoughCash += 1}
 			// console.log ("discardHandDrawFive process beginning...");
 			// console.log ("Discarding this.Hand process started...")
@@ -721,6 +750,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 			this.playMoney()  // this puts this.Hand $ into play
 			this.buyMoney()  // buys silver and gold for player 1
 			this.discardHandDrawFive()  // this will discard hand and draw 5,
+			console.log ("\n")
 			//console.log(this.name, this.printAll());
 			
 		}
@@ -740,11 +770,11 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		//console.log("????",village);
 		playerOne.doSpecial = function() {
 			//console.log("\n\n");
-			var order = [province, gold, estate, laboratory, market, councilRoom, witch, mine, smithy, woodcutter, village, silver, dutchy];
-			var cap =   [1000,     1000,     0,    		  0,	  0,           2,     0,    3,      0,         0,       4,   1000, 	1000];
+			var order = [province, gold, estate, laboratory, market, festival, councilRoom, witch, mine, smithy, woodcutter, village, silver, dutchy];
+			var cap =   [1000,     1000,     0,    		  0,	  0,        10,            0,     0,    0,      0,         0,       0,   1000, 	1000];
 			if (board.province < 3) {
-				order = [province, dutchy, estate, gold, laboratory, market, councilRoom, witch, mine,smithy, village, woodcutter, silver];
-				cap =   [1000,     1000,     1000,  1000,         0,       0,           0,    0,    0,     0,       0,          0,       0];
+				order = [province, dutchy, estate, gold, laboratory, festival, market, councilRoom, witch, mine,smithy, village, woodcutter, silver];
+				cap =   [1000,     1000,     1000,  1000,         0,        0,       0,           0,    0,    0,     0,       0,          0,       0];
 			}
 			
 			for (var cardIndex in order) {
@@ -752,7 +782,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 				//console.log(this.name, "Consider buying", card.card, "I have", this.cardCountOf(card.card), "and cap is", cap[cardIndex])
 				if (this.buys > 0 && board[card.card] > 0 && this.cashInPlay >= card.cost
 					&& cap[cardIndex] > this.cardCountOf(card.card)) {
-						//console.log("yes");
+						console.log ("I'm buying a ", card.card);
 					card.buy(this);
 				}
 			}
