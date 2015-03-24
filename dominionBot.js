@@ -42,10 +42,12 @@ the Supply for a 6-player game. All other Victory card
 piles (Estates, Duchies, and Victory Kingdom cards) 
 remain at 12 cards per pile*/
 
+/*
 
 console = {
 	log: print
-}
+}*/
+
 
 /*
 var prompt = require("prompt");
@@ -114,7 +116,7 @@ var mine = new Card("mine", 5, 0, 0, 10)
 var festival = new Card("festival", 5, 0, 0, 25)
 
 
-var specialMoney = 0	
+//var specialMoney = 0	
 
 // drawing a card should be it's own function
 // drawACard(5) should draw 5 cards, and if needbe, shuffle and draw
@@ -200,6 +202,7 @@ market.action = function(player){
 	player.drawCard(1);
 	player.buys += 1
 	player.actions += 1
+	player.cardMoney(1)
 	for (var i in player.hand) {
 		if (player.hand[i].card == this.card) {
 			var card = player.hand.splice(i,1)[0];
@@ -249,8 +252,8 @@ mine.action = function(player){
 }
 
 festival.action = function(player){
-	specialMoney += 2;
-	console.log ("I've played a festival and now have", specialMoney, "Special Money")
+	player.cardMoney(2);
+	console.log ("I've played a festival and now have", player.specialMoney, "Special Money");
 	player.buys += 1
 	player.actions += 2
 	for (var i in player.hand) {
@@ -354,6 +357,7 @@ function Player(n) {
 	this.stats.cardTotal
 	this.stats.playedFirst = 0
 	this.stats.cardDraws = 0
+	this.stats.specialMoney = 0
 	this.stats.turnsToWin = []  // is an array for later stats calculations
 	
 	this.totals = {};
@@ -370,6 +374,7 @@ function Player(n) {
 	this.totals.playedFirst = 0
 	this.hide = {}
 	this.totals.cardDraws = 0
+	this.totals.specialMoney = 0
 	this.hide.turnsToWin = []  // is an array for later stats calculations
 	this.reset = function() {
 		this.deck = copy(eachPlayersCards);
@@ -501,6 +506,16 @@ Player.prototype.trashWorstTreasure = function () {
 			
 	}
 	// return the cost of the treasure trashed
+}
+
+Player.prototype.cardMoney = function (amount) {
+	if (this.specialMoney === isNaN){
+		this.specialMoney = 0
+	}
+	this.specialMoney += amount
+	this.stats.specialMoney += amount
+	this.totals.specialMoney += amount
+	
 }
 
 
@@ -668,8 +683,8 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 
 		Player.prototype.buyMoney = function() {
 			this.cashInPlay = (this.inPlay.map(function(x){return x.cash})).reduce(function(a,b){return a + b},0);
-			this.cashInPlay += specialMoney
-			console.log ("I have ",specialMoney, "specialMoney")
+			this.cashInPlay += this.specialMoney
+			console.log ("I have ",this.specialMoney, "specialMoney")
 			console.log("MONEY", this.name, this.cashInPlay);
 			this.doSpecial();
 			
@@ -701,7 +716,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 
 		//function discardHandDrawFive(playerHand)
 		Player.prototype.discardHandDrawFive = function(){
-			specialMoney = 0
+			this.specialMoney = 0
 			if (this.buys > 0) {this.stats.notEnoughCash += 1}
 			// console.log ("discardHandDrawFive process beginning...");
 			// console.log ("Discarding this.Hand process started...")
@@ -745,6 +760,7 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		}
 
 		Player.prototype.turn = function(){
+			this.specialMoney = 0
 			this.roundCounter(); // puts round box in front of every turn
 			this.playAction()  // this puts this.Hand $ into play
 			this.playMoney()  // this puts this.Hand $ into play
@@ -771,8 +787,8 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		playerOne.doSpecial = function() {
 			//console.log("\n\n");
 			var order = [province, gold, estate, laboratory, market, festival, councilRoom, witch, mine, smithy, woodcutter, village, silver, dutchy];
-			var cap =   [1000,     1000,     0,    		  0,	  0,        10,            0,     0,    0,      0,         0,       0,   1000, 	1000];
-			if (board.province < 3) {
+			var cap =   [1000,     1000,     0,    		  0,	  3,        0,            0,     3,    0,      0,         0,       0,   1000, 	1000];
+			if (board.province < 4) {
 				order = [province, dutchy, estate, gold, laboratory, festival, market, councilRoom, witch, mine,smithy, village, woodcutter, silver];
 				cap =   [1000,     1000,     1000,  1000,         0,        0,       0,           0,    0,    0,     0,       0,          0,       0];
 			}
