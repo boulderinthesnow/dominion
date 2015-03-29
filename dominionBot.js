@@ -110,10 +110,16 @@ var village = new Card("village", 3, 0, 0, 40);
 var laboratory = new Card("laboratory", 5, 0, 0, 50);
 var councilRoom = new Card("councilRoom", 5, 0, 0, 30);
 var witch = new Card("witch", 5, 0, 0, 20);
-var woodcutter = new Card("woodcutter", 3, 0, 2, 15)
-var market = new Card("market", 5, 0, 1, 60)
-var mine = new Card("mine", 5, 0, 0, 10)
-var festival = new Card("festival", 5, 0, 0, 25)
+var woodcutter = new Card("woodcutter", 3, 0, 2, 15);
+var market = new Card("market", 5, 0, 0, 60);
+var mine = new Card("mine", 5, 0, 0, 10);
+var festival = new Card("festival", 5, 0, 0, 25);
+var moneyLender = new Card("moneyLender", 4, 0, 0, 20);
+var adventurer = new Card("adventurer", 6, 0, 0, 5);
+var throneRoom = new Card("throneRoom", 4, 0, 0, 70);
+
+
+
 
 
 //var specialMoney = 0	
@@ -267,6 +273,97 @@ festival.action = function(player){
 }
 
 
+moneyLender.action = function(player){
+	
+	if (player.trashCopper() === true) {
+		player.cardMoney(3);
+	}
+	console.log ("I've played a moneyLender and now have", player.specialMoney, "Special Money");
+	for (var i in player.hand) {
+		if (player.hand[i].card == this.card) {
+			var card = player.hand.splice(i,1)[0];
+			player.inPlay.push(card);
+			console.log ("I have", player.actions, "actions")
+			break;
+		}
+	}
+}
+
+adventurer.action = function(player) {
+	var revealedMoney = 0;
+	// reveal cards from top of deck
+	// take cards from top of deck and push them into revealed area
+	while ((revealedMoney < 2) && (player.deck.concat(player.discard).length > 0)) {
+		player.drawReveal(1);
+		console.log ("I have revealed",player.revealed.length, "cards")
+		for (x in player.revealed) {
+//			console.log (player.revealed[x].card);
+		}
+		for (each in player.revealed) {
+		if (player.revealed[each].cash > 0) {
+				player.inPlay.push(player.revealed.splice(each,1)[0]);
+//				console.log ("card pushed to inPlay from revealed:")
+				for (x in player.inPlay) {
+//					console.log (player.inPlay[x].card);
+				}
+				revealedMoney += 1
+				
+			}
+		}
+//		console.log( "AT THE BEGINNING I have discarded", player.discard.length,"cards");
+//		console.log( "BEFORE DISCARD REVEALED, I have revealed", player.revealed.length,"cards \n");
+			
+	}
+	player.discardRevealed();
+//	console.log( "AFTER DISCARD REVEALED, I have discarded", player.discard.length,"cards");
+//	console.log( "I now have", player.revealed.length,"revealed cards \n");
+
+}
+
+
+throneRoom.action = function(player) {
+	for (var i in player.hand) {
+		if (player.hand[i].card == this.card) {
+			var card = player.hand.splice(i,1)[0];
+			player.inPlay.push(card);
+			console.log ("I'm playing a", this.card)
+			console.log ("I have", player.actions, "actions")
+			break;
+		}
+	}
+	
+	/*
+	var sorted = this.hand.sort(function (a,b) {return b.playValue-a.playValue});
+	//console.log(this.hand.length);
+	return sorted[0];*/
+
+	
+	// pick another action card in your hand
+	
+	if (player.actionsHand() > 0) {
+		var playTwiceCard = player.pickBestCardToPlay()
+		console.log ("best card to play is", playTwiceCard.card)
+		// play the 2nd action card 2x
+		playTwiceCard.action(player);
+		console.log ("played", playTwiceCard.card, "First Time");
+	
+		for (var i in player.inPlay) {
+			if (player.inPlay[i].card == playTwiceCard.card) {
+				var pushToHand = player.inPlay.splice(i,1)[0];
+				player.hand.push(pushToHand);
+				console.log ("I've returned",pushToHand.card, "to my hand for next ThroneRoom play")
+				break
+			}
+		}
+	//	player.actions -= 1
+		playTwiceCard.action(player)
+		console.log ("played", playTwiceCard.card, "Second Time");	
+	}
+}
+
+
+
+
 
 var numberOfPlayers = 2
 var gameCount = 0
@@ -302,6 +399,9 @@ var board = {
 	market: 10,
 	mine: 10,
 	festival: 10,
+	moneyLender: 10,
+	adventurer: 10,
+	thoneRooom: 10,
 	
 	reset: function (){
 		this.province = 12;
@@ -324,6 +424,9 @@ var board = {
 		this.market = 10;
 		this.mine = 10;
 		this.festival = 10;
+		this.moneyLender = 10;
+		this.adventurer = 10;
+		this.throneRoom = 10;
 	}
 };
 
@@ -341,6 +444,7 @@ function Player(n) {
 	this.inPlay = [];
 	this.discard = [];
 	this.cashInPlay = [];
+	this.revealed = [];
 	this.name = n;
 	
 	this.stats = {};
@@ -405,7 +509,7 @@ function Player(n) {
 	}
 
 }
- 
+
 Player.prototype.buy = function () {
 	
 	
@@ -505,8 +609,37 @@ Player.prototype.trashWorstTreasure = function () {
 			
 			
 	}
-	// return the cost of the treasure trashed
 }
+
+	Player.prototype.trashCopper = function () {
+		
+		for (x in this.hand) {
+			var q = this.hand[x];	
+			if (q.card === "copper") {				
+				removedCard = this.hand.splice(x,1)[0]
+				console.log ("I'm getting rid of ", removedCard.card)
+				board.trash.push (removedCard);
+				//			console.log ("the trash has", board.trash.length, "cards")
+
+				for (w in board.trash){
+					r = board.trash[w]
+//									console.log ("I have ",r.card, "in the trash")
+				}
+				return (true);
+			
+			}	
+		}
+		console.log ("I have no coppers to trash");	
+	}
+	
+	Player.prototype.revealACard = function () {
+		// push card from top of deck in revealed area
+		console.log ("I have", this.deck.length, "cards in my deck");
+		this.revealed.push (this.deck.shift());
+		console.log ("I have revealed",this.revealed);
+		console.log ("I have", this.deck.length, "cards in my deck");
+	}
+
 
 Player.prototype.cardMoney = function (amount) {
 	if (this.specialMoney === isNaN){
@@ -607,11 +740,55 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		}
 	}
 	
+	Player.prototype.drawReveal = function(numCards) {
+		// do until numCards
+		for (i = 0; i < numCards; i++){
+			// if deck, draw a card
+			if (this.deck.length > 0){
+				this.revealed.push(this.deck[0]);
+				this.deck.shift();
+				this.totals.revealedCards += 1
+				// if no deck, shuffle discard into deck
+			} else if (this.deck.length === 0){
+				shuffleArray(this.discard);
+				while (this.discard.length > 0){ // put discard into deck
+					this.deck.push(this.discard[0]);
+					this.discard.shift();
+				}
+				// if deck draw a card
+				if (this.deck.length > 0){
+					this.revealed.push(this.deck[0]);
+					this.deck.shift();
+					this.totals.revealedCards += 1
+				}
+			}
+		
+		}
+	}
+	
+	Player.prototype.actionsHand = function() {
+		var actionCount = 0
+		for ( f in this.hand) {
+			if (this.hand[f].action !== undefined) {
+				actionCount += 1
+				console.log ("I've found",actionCount,"action(s) in my hand");
+			}
+		}
+		return actionCount
+	}
+	
+	
 	Player.prototype.discardHandCard = function(numCards) {
 		for (i = 0 ; i < numCards; i++){
 				this.discard.push(this.hand.shift());
 				
 			};
+	}
+	
+	Player.prototype.discardRevealed = function () {
+		while (this.revealed.length > 0) {
+			this.discard.push(this.revealed.shift());
+		}
 	}
 		
 		Player.prototype.discardInPlay = function() {
@@ -717,9 +894,8 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		//function discardHandDrawFive(playerHand)
 		Player.prototype.discardHandDrawFive = function(){
 			this.specialMoney = 0
+			this.discardRevealed();
 			if (this.buys > 0) {this.stats.notEnoughCash += 1}
-			// console.log ("discardHandDrawFive process beginning...");
-			// console.log ("Discarding this.Hand process started...")
 			
 			// discard everything
 			this.discardHandCard(this.hand.length)	
@@ -786,11 +962,11 @@ var eachPlayersCards = [copper, copper, copper, copper, copper, copper,
 		//console.log("????",village);
 		playerOne.doSpecial = function() {
 			//console.log("\n\n");
-			var order = [province, gold, estate, laboratory, market, festival, councilRoom, witch, mine, smithy, woodcutter, village, silver, dutchy];
-			var cap =   [1000,     1000,     0,    		  0,	  3,        0,            0,     3,    0,      0,         0,       0,   1000, 	1000];
+			var order = [province, gold, estate, throneRoom, laboratory, market, festival, councilRoom, witch, mine, smithy, moneyLender,woodcutter, adventurer, village, silver, dutchy];
+			var cap =   [1000,     1000,     0,    		  3,          0,	  ,        5,            4,     0,    0,      ,          0,          0,         0,        4,   1000, 	1000];
 			if (board.province < 4) {
-				order = [province, dutchy, estate, gold, laboratory, festival, market, councilRoom, witch, mine,smithy, village, woodcutter, silver];
-				cap =   [1000,     1000,     1000,  1000,         0,        0,       0,           0,    0,    0,     0,       0,          0,       0];
+				order = [province, dutchy, estate, gold, throneRoom, laboratory, festival, market, councilRoom, witch, mine,smithy, adventurer, village, woodcutter, silver];
+				cap =   [1000,     1000,     1000,  1000,         0,          0,        0,       0,           0,    0,    0,     0,          0,      0,          0,       0];
 			}
 			
 			for (var cardIndex in order) {
